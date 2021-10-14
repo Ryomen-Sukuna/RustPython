@@ -1429,7 +1429,7 @@ impl VirtualMachine {
                     ))
                 })?
         };
-        setattro(obj, attr_name, attr_value, self)
+        obj.with_ptr(|obj| setattro(obj, attr_name, attr_value, self))
     }
 
     pub fn set_attr<K, V>(&self, obj: &PyObjectRef, attr_name: K, attr_value: V) -> PyResult<()>
