@@ -1918,7 +1918,7 @@ impl VirtualMachine {
             .class()
             .mro_find_map(|cls| cls.slots.hash.load())
             .unwrap(); // hash always exist
-        hash(obj, self)
+        obj.with_ptr(|obj| hash(obj, self))
     }
 
     pub fn obj_len_opt(&self, obj: &PyObjectRef) -> Option<PyResult<usize>> {
