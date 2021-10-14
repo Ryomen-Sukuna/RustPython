@@ -1860,15 +1860,16 @@ impl VirtualMachine {
         op: PyComparisonOp,
     ) -> PyResult<Either<PyObjectRef, bool>> {
         let swapped = op.swapped();
-        let call_cmp = |obj: &PyObjectRef, other, op| {
+        let call_cmp = |obj: &PyObjectRef, other: &PyObjectRef, op| {
             let cmp = obj
                 .class()
                 .mro_find_map(|cls| cls.slots.richcompare.load())
                 .unwrap();
-            Ok(match cmp(obj, other, op, self)? {
+            let r = match obj.with_ptr(|obj| other.with_ptr(|other| cmp(obj, other, op, self)))? {
                 Either::A(obj) => PyArithmeticValue::from_object(self, obj).map(Either::A),
                 Either::B(arithmetic) => arithmetic.map(Either::B),
-            })
+            };
+            Ok(r)
         };
 
         let mut checked_reverse_op = false;
