@@ -42,7 +42,7 @@ where
                     ))
                 })?
         };
-        self.0.borrow().with_ptr(|zelf| iternext(zelf, vm))
+        iternext(self.0.borrow(), vm)
     }
 
     pub fn iter<'a, 'b, U>(

@@ -28,7 +28,7 @@ use crate::{
     stdlib,
     types::PyComparisonOp,
     utils::Either,
-    IdProtocol, ItemProtocol, PyArithmeticValue, PyContext, PyLease, PyMethod, PyObject,
+    IdProtocol, ItemProtocol, PyArithmeticValue, PyContext, PyLease, PyMethod, PyObj, PyObject,
     PyObjectRef, PyObjectWrap, PyRef, PyRefExact, PyResult, PyValue, TryFromObject, TypeProtocol,
 };
 use crossbeam_utils::atomic::AtomicCell;
@@ -919,8 +919,8 @@ impl VirtualMachine {
             }),
         }
     }
-    pub fn to_index(&self, obj: &PyObjectRef) -> PyResult<PyIntRef> {
-        self.to_index_opt(obj.clone()).unwrap_or_else(|| {
+    pub fn to_index(&self, obj: &PyObj) -> PyResult<PyIntRef> {
+        self.to_index_opt(obj.to_owned()).unwrap_or_else(|| {
             Err(self.new_type_error(format!(
                 "'{}' object cannot be interpreted as an integer",
                 obj.class().name()
@@ -1183,14 +1183,18 @@ impl VirtualMachine {
     }
 
     #[inline]
-    pub fn call_method<T>(&self, obj: &PyObjectRef, method_name: &str, args: T) -> PyResult
+    pub fn call_method<T>(&self, obj: &PyObj, method_name: &str, args: T) -> PyResult
     where
         T: IntoFuncArgs,
     {
         flame_guard!(format!("call_method({:?})", method_name));
 
-        PyMethod::get(obj.clone(), PyStr::from(method_name).into_ref(self), self)?
-            .invoke(args, self)
+        PyMethod::get(
+            obj.to_owned(),
+            PyStr::from(method_name).into_ref(self),
+            self,
+        )?
+        .invoke(args, self)
     }
 
     pub fn dir(&self, obj: Option<PyObjectRef>) -> PyResult<PyList> {
@@ -1235,7 +1239,7 @@ impl VirtualMachine {
         match slot_call {
             Some(slot_call) => {
                 self.trace_event(TraceEvent::Call)?;
-                let result = callable.with_ptr(|zelf| slot_call(zelf, args, self));
+                let result = slot_call(&callable, args, self);
                 self.trace_event(TraceEvent::Return)?;
                 result
             }
@@ -1298,7 +1302,7 @@ impl VirtualMachine {
         Ok(())
     }
 
-    pub fn extract_elements_func<T, F>(&self, value: &PyObjectRef, func: F) -> PyResult<Vec<T>>
+    pub fn extract_elements_func<T, F>(&self, value: &PyObj, func: F) -> PyResult<Vec<T>>
     where
         F: Fn(PyObjectRef) -> PyResult<T>,
     {
@@ -1325,15 +1329,11 @@ impl VirtualMachine {
         }
     }
 
-    pub fn extract_elements<T: TryFromObject>(&self, value: &PyObjectRef) -> PyResult<Vec<T>> {
+    pub fn extract_elements<T: TryFromObject>(&self, value: &PyObj) -> PyResult<Vec<T>> {
         self.extract_elements_func(value, |obj| T::try_from_object(self, obj))
     }
 
-    pub fn map_iterable_object<F, R>(
-        &self,
-        obj: &PyObjectRef,
-        mut f: F,
-    ) -> PyResult<PyResult<Vec<R>>>
+    pub fn map_iterable_object<F, R>(&self, obj: &PyObj, mut f: F) -> PyResult<PyResult<Vec<R>>>
     where
         F: FnMut(PyObjectRef) -> PyResult<R>,
     {
@@ -1367,12 +1367,12 @@ impl VirtualMachine {
         })
     }
 
-    fn map_pyiter<F, R>(&self, value: &PyObjectRef, mut f: F) -> PyResult<Vec<R>>
+    fn map_pyiter<F, R>(&self, value: &PyObj, mut f: F) -> PyResult<Vec<R>>
     where
         F: FnMut(PyObjectRef) -> PyResult<R>,
     {
-        let iter = value.clone().get_iter(self)?;
-        let cap = match self.length_hint(value.clone()) {
+        let iter = value.to_owned().get_iter(self)?;
+        let cap = match self.length_hint(value.to_owned()) {
             Err(e) if e.class().is(&self.ctx.exceptions.runtime_error) => return Err(e),
             Ok(Some(value)) => Some(value),
             // Use a power of 2 as a default capacity.
@@ -1429,7 +1429,7 @@ impl VirtualMachine {
                     ))
                 })?
         };
-        obj.with_ptr(|obj| setattro(obj, attr_name, attr_value, self))
+        setattro(&obj, attr_name, attr_value, self)
     }
 
     pub fn set_attr<K, V>(&self, obj: &PyObjectRef, attr_name: K, attr_value: V) -> PyResult<()>
@@ -1860,12 +1860,12 @@ impl VirtualMachine {
         op: PyComparisonOp,
     ) -> PyResult<Either<PyObjectRef, bool>> {
         let swapped = op.swapped();
-        let call_cmp = |obj: &PyObjectRef, other: &PyObjectRef, op| {
+        let call_cmp = |obj: &PyObj, other: &PyObj, op| {
             let cmp = obj
                 .class()
                 .mro_find_map(|cls| cls.slots.richcompare.load())
                 .unwrap();
-            let r = match obj.with_ptr(|obj| other.with_ptr(|other| cmp(obj, other, op, self)))? {
+            let r = match cmp(obj, other, op, self)? {
                 Either::A(obj) => PyArithmeticValue::from_object(self, obj).map(Either::A),
                 Either::B(arithmetic) => arithmetic.map(Either::B),
             };
@@ -1914,12 +1914,12 @@ impl VirtualMachine {
         self._cmp(&a, &b, op).map(|res| res.into_pyobject(self))
     }
 
-    pub fn _hash(&self, obj: &PyObjectRef) -> PyResult<rustpython_common::hash::PyHash> {
+    pub fn _hash(&self, obj: &PyObj) -> PyResult<rustpython_common::hash::PyHash> {
         let hash = obj
             .class()
             .mro_find_map(|cls| cls.slots.hash.load())
             .unwrap(); // hash always exist
-        obj.with_ptr(|obj| hash(obj, self))
+        hash(obj, self)
     }
 
     pub fn obj_len_opt(&self, obj: &PyObjectRef) -> Option<PyResult<usize>> {

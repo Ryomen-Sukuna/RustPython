@@ -2,8 +2,8 @@ use super::{PyInt, PyStrRef, PyTypeRef};
 use crate::{
     function::{IntoPyObject, OptionalArg},
     types::Constructor,
-    IdProtocol, PyClassImpl, PyContext, PyObjectRef, PyResult, PyValue, TryFromBorrowedObject,
-    TypeProtocol, VirtualMachine,
+    IdProtocol, PyClassImpl, PyContext, PyObj, PyObjectRef, PyResult, PyValue,
+    TryFromBorrowedObject, TypeProtocol, VirtualMachine,
 };
 use num_bigint::Sign;
 use num_traits::Zero;
@@ -16,7 +16,7 @@ impl IntoPyObject for bool {
 }
 
 impl TryFromBorrowedObject for bool {
-    fn try_from_borrowed_object(vm: &VirtualMachine, obj: &PyObjectRef) -> PyResult<bool> {
+    fn try_from_borrowed_object(vm: &VirtualMachine, obj: &PyObj) -> PyResult<bool> {
         if obj.isinstance(&vm.ctx.types.int_type) {
             Ok(get_value(obj))
         } else {
@@ -176,7 +176,7 @@ pub(crate) fn init(context: &PyContext) {
 // }
 
 // Retrieve inner int value:
-pub(crate) fn get_value(obj: &PyObjectRef) -> bool {
+pub(crate) fn get_value(obj: &PyObj) -> bool {
     !obj.payload::<PyInt>().unwrap().as_bigint().is_zero()
 }
 

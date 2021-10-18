@@ -14,8 +14,8 @@ use crate::{
     },
     utils::Either,
     vm::{ReprGuard, VirtualMachine},
-    IdProtocol, PyClassDef, PyClassImpl, PyComparisonValue, PyContext, PyObjectPtr, PyObjectRef,
-    PyRef, PyResult, PyValue, TryFromObject, TypeProtocol,
+    IdProtocol, PyClassDef, PyClassImpl, PyComparisonValue, PyContext, PyObj, PyObjectRef, PyRef,
+    PyResult, PyValue, TryFromObject, TypeProtocol,
 };
 use std::fmt;
 use std::iter::FromIterator;
@@ -254,7 +254,7 @@ impl PyList {
 
     fn _iter_equal<F: FnMut(), const SHORT: bool>(
         &self,
-        needle: &PyObjectRef,
+        needle: &PyObj,
         range: Range<usize>,
         mut f: F,
         vm: &VirtualMachine,
@@ -300,8 +300,8 @@ impl PyList {
                     drop(elem_cls);
 
                     fn cmp(
-                        elem: PyObjectPtr,
-                        needle: PyObjectPtr,
+                        elem: &PyObj,
+                        needle: &PyObj,
                         elem_cmp: RichCompareFunc,
                         needle_cmp: RichCompareFunc,
                         vm: &VirtualMachine,
@@ -324,20 +324,14 @@ impl PyList {
                     if elem_cmp as usize == richcompare_wrapper as usize {
                         let elem = elem.clone();
                         drop(guard);
-                        PyObjectPtr::with((&elem, needle), |(elem, needle)| {
-                            cmp(elem, needle, elem_cmp, needle_cmp, vm)
-                        })?
+                        cmp(&elem, &needle, elem_cmp, needle_cmp, vm)?
                     } else {
-                        let eq = PyObjectPtr::with((elem, needle), |(elem, needle)| {
-                            cmp(elem, needle, elem_cmp, needle_cmp, vm)
-                        })?;
+                        let eq = cmp(elem, needle, elem_cmp, needle_cmp, vm)?;
                         borrower = Some(guard);
                         eq
                     }
                 } else {
-                    match PyObjectPtr::with((elem, needle), |(elem, needle)| {
-                        needle_cmp(needle, elem, PyComparisonOp::Eq, vm)
-                    })? {
+                    match needle_cmp(needle, elem, PyComparisonOp::Eq, vm)? {
                         Either::B(PyComparisonValue::Implemented(value)) => {
                             drop(elem_cls);
                             borrower = Some(guard);
@@ -355,8 +349,8 @@ impl PyList {
                             drop(elem_cls);
 
                             fn cmp(
-                                elem: PyObjectPtr,
-                                needle: PyObjectPtr,
+                                elem: &PyObj,
+                                needle: &PyObj,
                                 elem_cmp: RichCompareFunc,
                                 vm: &VirtualMachine,
                             ) -> PyResult<bool> {
@@ -372,13 +366,9 @@ impl PyList {
                             if elem_cmp as usize == richcompare_wrapper as usize {
                                 let elem = elem.clone();
                                 drop(guard);
-                                PyObjectPtr::with((&elem, needle), |(elem, needle)| {
-                                    cmp(elem, needle, elem_cmp, vm)
-                                })?
+                                cmp(&elem, needle, elem_cmp, vm)?
                             } else {
-                                let eq = PyObjectPtr::with((elem, needle), |(elem, needle)| {
-                                    cmp(elem, needle, elem_cmp, vm)
-                                })?;
+                                let eq = cmp(&elem, needle, elem_cmp, vm)?;
                                 borrower = Some(guard);
                                 eq
                             }
@@ -591,7 +581,7 @@ impl Iterable for PyList {
 impl Comparable for PyList {
     fn cmp(
         zelf: &PyRef<Self>,
-        other: &PyObjectRef,
+        other: &PyObj,
         op: PyComparisonOp,
         vm: &VirtualMachine,
     ) -> PyResult<PyComparisonValue> {

@@ -4,8 +4,8 @@ use crate::{
     types::{Comparable, Constructor, Hashable, PyComparisonOp},
     IdProtocol,
     PyArithmeticValue::{self, *},
-    PyClassImpl, PyComparisonValue, PyContext, PyObjectRef, PyRef, PyResult, PyValue, TypeProtocol,
-    VirtualMachine,
+    PyClassImpl, PyComparisonValue, PyContext, PyObj, PyObjectRef, PyRef, PyResult, PyValue,
+    TypeProtocol, VirtualMachine,
 };
 use num_complex::Complex64;
 use num_traits::Zero;
@@ -408,7 +408,7 @@ impl PyComplex {
 impl Comparable for PyComplex {
     fn cmp(
         zelf: &PyRef<Self>,
-        other: &PyObjectRef,
+        other: &PyObj,
         op: PyComparisonOp,
         vm: &VirtualMachine,
     ) -> PyResult<PyComparisonValue> {

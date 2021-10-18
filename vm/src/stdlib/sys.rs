@@ -337,7 +337,7 @@ mod sys {
 
     #[pyfunction]
     fn getrefcount(obj: PyObjectRef) -> usize {
-        PyObjectRef::strong_count(&obj)
+        obj.strong_count()
     }
 
     #[pyfunction]

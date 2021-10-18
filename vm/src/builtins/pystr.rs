@@ -15,8 +15,8 @@ use crate::{
         Unconstructible,
     },
     utils::Either,
-    IdProtocol, ItemProtocol, PyClassDef, PyClassImpl, PyComparisonValue, PyContext, PyObjectRef,
-    PyRef, PyResult, PyValue, TypeProtocol, VirtualMachine,
+    IdProtocol, ItemProtocol, PyClassDef, PyClassImpl, PyComparisonValue, PyContext, PyObj,
+    PyObjectRef, PyRef, PyResult, PyValue, TypeProtocol, VirtualMachine,
 };
 use ascii::{AsciiStr, AsciiString};
 use bstr::ByteSlice;
@@ -1306,7 +1306,7 @@ impl Hashable for PyStr {
 impl Comparable for PyStr {
     fn cmp(
         zelf: &PyRef<Self>,
-        other: &PyObjectRef,
+        other: &PyObj,
         op: PyComparisonOp,
         _vm: &VirtualMachine,
     ) -> PyResult<PyComparisonValue> {

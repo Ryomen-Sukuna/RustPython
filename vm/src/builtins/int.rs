@@ -6,8 +6,8 @@ use crate::{
     function::{ArgIntoBool, IntoPyObject, IntoPyResult, OptionalArg, OptionalOption},
     try_value_from_borrowed_object,
     types::{Comparable, Constructor, Hashable, PyComparisonOp},
-    IdProtocol, PyArithmeticValue, PyClassImpl, PyComparisonValue, PyContext, PyObjectRef, PyRef,
-    PyResult, PyValue, TryFromBorrowedObject, TypeProtocol, VirtualMachine,
+    IdProtocol, PyArithmeticValue, PyClassImpl, PyComparisonValue, PyContext, PyObj, PyObjectRef,
+    PyRef, PyResult, PyValue, TryFromBorrowedObject, TypeProtocol, VirtualMachine,
 };
 use bstr::ByteSlice;
 use num_bigint::{BigInt, BigUint, Sign};
@@ -63,7 +63,7 @@ impl PyValue for PyInt {
         vm.ctx.new_int(self.value).into()
     }
 
-    fn special_retrieve(vm: &VirtualMachine, obj: &PyObjectRef) -> Option<PyResult<PyRef<Self>>> {
+    fn special_retrieve(vm: &VirtualMachine, obj: &PyObj) -> Option<PyResult<PyRef<Self>>> {
         Some(vm.to_index(obj))
     }
 }
@@ -83,7 +83,7 @@ impl_into_pyobject_int!(isize i8 i16 i32 i64 i128 usize u8 u16 u32 u64 u128 BigI
 macro_rules! impl_try_from_object_int {
     ($(($t:ty, $to_prim:ident),)*) => {$(
         impl TryFromBorrowedObject for $t {
-            fn try_from_borrowed_object(vm: &VirtualMachine, obj: &PyObjectRef) -> PyResult<Self> {
+            fn try_from_borrowed_object(vm: &VirtualMachine, obj: &PyObj) -> PyResult<Self> {
                 try_value_from_borrowed_object(vm, obj, |int: &PyInt| {
                     int.try_to_primitive(vm)
                 })
@@ -717,7 +717,7 @@ impl PyInt {
 impl Comparable for PyInt {
     fn cmp(
         zelf: &PyRef<Self>,
-        other: &PyObjectRef,
+        other: &PyObj,
         op: PyComparisonOp,
         vm: &VirtualMachine,
     ) -> PyResult<PyComparisonValue> {

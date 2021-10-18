@@ -12,7 +12,7 @@ use crate::{
     },
     utils::Either,
     vm::{ReprGuard, VirtualMachine},
-    IdProtocol, PyArithmeticValue, PyClassDef, PyClassImpl, PyComparisonValue, PyContext,
+    IdProtocol, PyArithmeticValue, PyClassDef, PyClassImpl, PyComparisonValue, PyContext, PyObj,
     PyObjectRef, PyRef, PyResult, PyValue, TransmuteFromObject, TryFromObject, TypeProtocol,
 };
 use rustpython_common::lock::PyMutex;
@@ -345,7 +345,7 @@ impl Hashable for PyTuple {
 impl Comparable for PyTuple {
     fn cmp(
         zelf: &PyRef<Self>,
-        other: &PyObjectRef,
+        other: &PyObj,
         op: PyComparisonOp,
         vm: &VirtualMachine,
     ) -> PyResult<PyComparisonValue> {

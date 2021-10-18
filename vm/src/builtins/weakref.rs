@@ -3,7 +3,7 @@ use crate::common::hash::PyHash;
 use crate::{
     function::OptionalArg,
     types::{Callable, Comparable, Constructor, Hashable, PyComparisonOp},
-    IdProtocol, PyClassImpl, PyContext, PyObjectRef, PyObjectWeak, PyRef, PyResult, PyValue,
+    IdProtocol, PyClassImpl, PyContext, PyObj, PyObjectRef, PyObjectWeak, PyRef, PyResult, PyValue,
     TypeProtocol, VirtualMachine,
 };
 
@@ -17,9 +17,9 @@ pub struct PyWeak {
 }
 
 impl PyWeak {
-    pub fn downgrade(obj: &PyObjectRef) -> PyWeak {
+    pub fn downgrade(obj: &PyObj) -> PyWeak {
         PyWeak {
-            referent: PyObjectRef::downgrade(obj),
+            referent: obj.downgrade(),
             hash: AtomicCell::new(None),
         }
     }
@@ -104,7 +104,7 @@ impl Hashable for PyWeak {
 impl Comparable for PyWeak {
     fn cmp(
         zelf: &PyRef<Self>,
-        other: &PyObjectRef,
+        other: &PyObj,
         op: PyComparisonOp,
         vm: &VirtualMachine,
     ) -> PyResult<crate::PyComparisonValue> {

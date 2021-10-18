@@ -85,7 +85,7 @@ impl PyObjectRef {
     pub fn bytes(self, vm: &VirtualMachine) -> PyResult {
         let bytes_type = &vm.ctx.types.bytes_type;
         match self.downcast_exact::<PyInt>(vm) {
-            Ok(int) => Err(pyref_type_error(vm, bytes_type, int.as_object())),
+            Ok(int) => Err(pyref_type_error(vm, bytes_type, &**int.as_object())),
             Err(obj) => PyBytes::py_new(
                 bytes_type.clone(),
                 ByteInnerNewOptions {

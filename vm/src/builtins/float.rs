@@ -6,7 +6,7 @@ use crate::{
     types::{Comparable, Constructor, Hashable, PyComparisonOp},
     IdProtocol,
     PyArithmeticValue::{self, *},
-    PyClassImpl, PyComparisonValue, PyContext, PyObjectRef, PyRef, PyResult, PyValue,
+    PyClassImpl, PyComparisonValue, PyContext, PyObj, PyObjectRef, PyRef, PyResult, PyValue,
     TryFromObject, TypeProtocol, VirtualMachine,
 };
 use num_bigint::{BigInt, ToBigInt};
@@ -79,7 +79,7 @@ pub fn try_float(obj: &PyObjectRef, vm: &VirtualMachine) -> PyResult<f64> {
     })
 }
 
-pub(crate) fn to_op_float(obj: &PyObjectRef, vm: &VirtualMachine) -> PyResult<Option<f64>> {
+pub(crate) fn to_op_float(obj: &PyObj, vm: &VirtualMachine) -> PyResult<Option<f64>> {
     let v = if let Some(float) = obj.payload_if_subclass::<PyFloat>(vm) {
         Some(float.value)
     } else if let Some(int) = obj.payload_if_subclass::<PyInt>(vm) {
@@ -494,7 +494,7 @@ impl PyFloat {
 impl Comparable for PyFloat {
     fn cmp(
         zelf: &PyRef<Self>,
-        other: &PyObjectRef,
+        other: &PyObj,
         op: PyComparisonOp,
         vm: &VirtualMachine,
     ) -> PyResult<PyComparisonValue> {

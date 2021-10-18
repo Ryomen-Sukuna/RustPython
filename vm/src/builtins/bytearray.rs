@@ -28,7 +28,7 @@ use crate::{
         IterNextIterable, Iterable, PyComparisonOp, Unconstructible, Unhashable,
     },
     utils::Either,
-    IdProtocol, PyClassDef, PyClassImpl, PyComparisonValue, PyContext, PyObjectRef, PyRef,
+    IdProtocol, PyClassDef, PyClassImpl, PyComparisonValue, PyContext, PyObj, PyObjectRef, PyRef,
     PyResult, PyValue, TypeProtocol, VirtualMachine,
 };
 use bstr::ByteSlice;
@@ -697,7 +697,7 @@ impl PyByteArray {
 impl Comparable for PyByteArray {
     fn cmp(
         zelf: &PyRef<Self>,
-        other: &PyObjectRef,
+        other: &PyObj,
         op: PyComparisonOp,
         vm: &VirtualMachine,
     ) -> PyResult<PyComparisonValue> {

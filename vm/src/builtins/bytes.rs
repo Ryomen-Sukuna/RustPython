@@ -16,8 +16,8 @@ use crate::{
         IterNextIterable, Iterable, PyComparisonOp, Unconstructible,
     },
     utils::Either,
-    IdProtocol, PyClassImpl, PyComparisonValue, PyContext, PyObjectRef, PyRef, PyResult, PyValue,
-    TryFromBorrowedObject, TypeProtocol, VirtualMachine,
+    IdProtocol, PyClassImpl, PyComparisonValue, PyContext, PyObj, PyObjectRef, PyRef, PyResult,
+    PyValue, TryFromBorrowedObject, TypeProtocol, VirtualMachine,
 };
 use bstr::ByteSlice;
 use rustpython_common::{
@@ -608,7 +608,7 @@ impl Hashable for PyBytes {
 impl Comparable for PyBytes {
     fn cmp(
         zelf: &PyRef<Self>,
-        other: &PyObjectRef,
+        other: &PyObj,
         op: PyComparisonOp,
         vm: &VirtualMachine,
     ) -> PyResult<PyComparisonValue> {
@@ -687,7 +687,7 @@ impl IterNext for PyBytesIterator {
 }
 
 impl TryFromBorrowedObject for PyBytes {
-    fn try_from_borrowed_object(vm: &VirtualMachine, obj: &PyObjectRef) -> PyResult<Self> {
+    fn try_from_borrowed_object(vm: &VirtualMachine, obj: &PyObj) -> PyResult<Self> {
         PyBytesInner::try_from_borrowed_object(vm, obj).map(|x| x.into())
     }
 }

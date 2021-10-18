@@ -4,7 +4,7 @@ use crate::common::{
     static_cell,
 };
 pub use crate::pyobjectrc::{
-    PyObject, PyObjectPtr, PyObjectRef, PyObjectWeak, PyObjectWrap, PyRef, PyWeakRef,
+    PyObj, PyObject, PyObjectRef, PyObjectWeak, PyObjectWrap, PyRef, PyWeakRef,
 };
 use crate::{
     builtins::{
@@ -305,7 +305,7 @@ impl Default for PyContext {
 
 pub(crate) fn try_value_from_borrowed_object<T, F, R>(
     vm: &VirtualMachine,
-    obj: &PyObjectRef,
+    obj: &PyObj,
     f: F,
 ) -> PyResult<R>
 where
@@ -340,11 +340,11 @@ where
         }
     }
 }
-// the impl Borrow allows to pass PyObjectRef or &PyObjectRef
+// the impl Borrow allows to pass PyObjectRef or &PyObj
 fn pyref_payload_error(
     vm: &VirtualMachine,
     class: &PyTypeRef,
-    obj: impl std::borrow::Borrow<PyObjectRef>,
+    obj: impl std::borrow::Borrow<PyObj>,
 ) -> PyBaseExceptionRef {
     vm.new_runtime_error(format!(
         "Unexpected payload '{}' for type '{}'",
@@ -356,7 +356,7 @@ fn pyref_payload_error(
 pub(crate) fn pyref_type_error(
     vm: &VirtualMachine,
     class: &PyTypeRef,
-    obj: impl std::borrow::Borrow<PyObjectRef>,
+    obj: impl std::borrow::Borrow<PyObj>,
 ) -> PyBaseExceptionRef {
     let expected_type = &*class.name();
     let actual_class = obj.borrow().class();
@@ -513,6 +513,14 @@ impl TypeProtocol for PyObjectRef {
     }
 }
 
+impl TypeProtocol for PyObj {
+    fn class(&self) -> PyLease<'_, PyType> {
+        PyLease {
+            inner: self.class_lock().read(),
+        }
+    }
+}
+
 impl<T: PyObjectPayload> TypeProtocol for PyRef<T> {
     fn class(&self) -> PyLease<'_, PyType> {
         self.as_object().class()
@@ -635,7 +643,7 @@ impl<T: TryFromBorrowedObject> TryFromObject for T {
 
 pub trait TryFromBorrowedObject: Sized {
     /// Attempt to convert a Python object to a value of this type.
-    fn try_from_borrowed_object(vm: &VirtualMachine, obj: &PyObjectRef) -> PyResult<Self>;
+    fn try_from_borrowed_object(vm: &VirtualMachine, obj: &PyObj) -> PyResult<Self>;
 }
 
 impl PyObjectRef {
@@ -671,10 +679,10 @@ unsafe impl<T: PyValue> TransmuteFromObject for PyRef<T> {
             if obj.payload_is::<T>() {
                 Ok(())
             } else {
-                Err(pyref_payload_error(vm, class, obj))
+                Err(pyref_payload_error(vm, class, &**obj))
             }
         } else {
-            Err(pyref_type_error(vm, class, obj))
+            Err(pyref_type_error(vm, class, &**obj))
         }
     }
 }
@@ -755,7 +763,7 @@ pub trait PyValue: fmt::Debug + PyThreadingConstraint + Sized + 'static {
     }
 
     #[inline(always)]
-    fn special_retrieve(_vm: &VirtualMachine, _obj: &PyObjectRef) -> Option<PyResult<PyRef<Self>>> {
+    fn special_retrieve(_vm: &VirtualMachine, _obj: &PyObj) -> Option<PyResult<PyRef<Self>>> {
         None
     }
 

@@ -13,7 +13,7 @@ use crate::{
     stdlib::pystruct::FormatSpec,
     types::{AsBuffer, AsMapping, Comparable, Constructor, Hashable, PyComparisonOp},
     utils::Either,
-    IdProtocol, PyClassDef, PyClassImpl, PyComparisonValue, PyContext, PyObjectRef, PyRef,
+    IdProtocol, PyClassDef, PyClassImpl, PyComparisonValue, PyContext, PyObj, PyObjectRef, PyRef,
     PyResult, PyValue, TryFromBorrowedObject, TryFromObject, TypeProtocol, VirtualMachine,
 };
 use crossbeam_utils::atomic::AtomicCell;
@@ -607,7 +607,7 @@ impl PyMemoryView {
         .into_ref(vm))
     }
 
-    fn eq(zelf: &PyRef<Self>, other: &PyObjectRef, vm: &VirtualMachine) -> PyResult<bool> {
+    fn eq(zelf: &PyRef<Self>, other: &PyObj, vm: &VirtualMachine) -> PyResult<bool> {
         if zelf.is(other) {
             return Ok(true);
         }
@@ -774,7 +774,7 @@ impl AsMapping for PyMemoryView {
 impl Comparable for PyMemoryView {
     fn cmp(
         zelf: &PyRef<Self>,
-        other: &PyObjectRef,
+        other: &PyObj,
         op: PyComparisonOp,
         vm: &VirtualMachine,
     ) -> PyResult<PyComparisonValue> {

@@ -4,7 +4,8 @@ use crate::{
         PyDictRef, PyList,
     },
     function::IntoPyObject,
-    IdProtocol, PyObjectRef, PyObjectWrap, PyResult, TryFromObject, TypeProtocol, VirtualMachine,
+    IdProtocol, PyObj, PyObjectRef, PyObjectWrap, PyResult, TryFromObject, TypeProtocol,
+    VirtualMachine,
 };
 use std::borrow::Borrow;
 
@@ -26,10 +27,10 @@ where
     T: Borrow<PyObjectRef>;
 
 impl PyMapping<PyObjectRef> {
-    pub fn check(obj: &PyObjectRef, vm: &VirtualMachine) -> bool {
+    pub fn check(obj: &PyObj, vm: &VirtualMachine) -> bool {
         obj.class()
             .mro_find_map(|x| x.slots.as_mapping.load())
-            .map(|f| obj.with_ptr(|obj| f(obj, vm)).subscript.is_some())
+            .map(|f| f(obj, vm).subscript.is_some())
             .unwrap_or(false)
     }
 
@@ -37,7 +38,7 @@ impl PyMapping<PyObjectRef> {
         let obj_cls = self.0.class();
         for cls in obj_cls.iter_mro() {
             if let Some(f) = cls.slots.as_mapping.load() {
-                return self.0.with_ptr(|zelf| f(zelf, vm));
+                return f(&self.0, vm);
             }
         }
         PyMappingMethods::default()

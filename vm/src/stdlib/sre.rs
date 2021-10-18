@@ -12,7 +12,7 @@ mod _sre {
         protocol::PyBuffer,
         stdlib::sys,
         types::{Comparable, Hashable},
-        ItemProtocol, PyComparisonValue, PyObjectRef, PyRef, PyResult, PyValue,
+        ItemProtocol, PyComparisonValue, PyObj, PyObjectRef, PyRef, PyResult, PyValue,
         TryFromBorrowedObject, TryFromObject, VirtualMachine,
     };
     use core::str;
@@ -500,7 +500,7 @@ mod _sre {
 
                 let list = PyList::from(sublist).into_object(vm);
 
-                let join_type = if zelf.isbytes {
+                let join_type: PyObjectRef = if zelf.isbytes {
                     vm.ctx.new_bytes(vec![]).into()
                 } else {
                     vm.ctx.new_str(ascii!("")).into()
@@ -530,7 +530,7 @@ mod _sre {
     impl Comparable for Pattern {
         fn cmp(
             zelf: &PyRef<Self>,
-            other: &PyObjectRef,
+            other: &PyObj,
             op: crate::types::PyComparisonOp,
             vm: &VirtualMachine,
         ) -> PyResult<PyComparisonValue> {

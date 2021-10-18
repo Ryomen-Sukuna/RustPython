@@ -12,8 +12,8 @@ use crate::{
         Unconstructible, Unhashable,
     },
     vm::{ReprGuard, VirtualMachine},
-    IdProtocol, PyClassImpl, PyComparisonValue, PyContext, PyObjectRef, PyRef, PyResult, PyValue,
-    TryFromObject, TypeProtocol,
+    IdProtocol, PyClassImpl, PyComparisonValue, PyContext, PyObj, PyObjectRef, PyRef, PyResult,
+    PyValue, TryFromObject, TypeProtocol,
 };
 use std::{fmt, ops::Deref};
 
@@ -369,7 +369,7 @@ impl PySetInner {
     }
 }
 
-fn extract_set(obj: &PyObjectRef) -> Option<&PySetInner> {
+fn extract_set(obj: &PyObj) -> Option<&PySetInner> {
     match_class!(match obj {
         ref set @ PySet => Some(&set.inner),
         ref frozen @ PyFrozenSet => Some(&frozen.inner),
@@ -631,7 +631,7 @@ impl PySet {
 impl Comparable for PySet {
     fn cmp(
         zelf: &PyRef<Self>,
-        other: &PyObjectRef,
+        other: &PyObj,
         op: PyComparisonOp,
         vm: &VirtualMachine,
     ) -> PyResult<PyComparisonValue> {
@@ -829,7 +829,7 @@ impl Hashable for PyFrozenSet {
 impl Comparable for PyFrozenSet {
     fn cmp(
         zelf: &PyRef<Self>,
-        other: &PyObjectRef,
+        other: &PyObj,
         op: PyComparisonOp,
         vm: &VirtualMachine,
     ) -> PyResult<PyComparisonValue> {

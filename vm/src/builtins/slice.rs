@@ -3,8 +3,8 @@ use super::{PyInt, PyIntRef, PyTupleRef, PyTypeRef};
 use crate::{
     function::{FuncArgs, IntoPyObject, OptionalArg},
     types::{Comparable, Constructor, Hashable, PyComparisonOp, Unhashable},
-    PyClassImpl, PyComparisonValue, PyContext, PyObjectRef, PyRef, PyResult, PyValue, TypeProtocol,
-    VirtualMachine,
+    PyClassImpl, PyComparisonValue, PyContext, PyObj, PyObjectRef, PyRef, PyResult, PyValue,
+    TypeProtocol, VirtualMachine,
 };
 use num_bigint::{BigInt, ToBigInt};
 use num_traits::{One, Signed, ToPrimitive, Zero};
@@ -200,7 +200,7 @@ impl PySlice {
 impl Comparable for PySlice {
     fn cmp(
         zelf: &PyRef<Self>,
-        other: &PyObjectRef,
+        other: &PyObj,
         op: PyComparisonOp,
         vm: &VirtualMachine,
     ) -> PyResult<PyComparisonValue> {
